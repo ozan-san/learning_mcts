@@ -15,7 +15,7 @@ from math import sqrt
 from math import log
 from random import choice
 
-coeff = sqrt(2)/2.0
+coeff = sqrt(2) / 2.0
 
 
 def add_score(prev_score, to_add):
@@ -193,25 +193,13 @@ def uct(node):
     return ((win_count + draw_count) / full_count) + coeff * sqrt(log(node.parent.visitCount) / full_count)
 
 
-def selection(node):
-    children = node.children
-    bestScore = 0
-    bestChild = None
-    for child in children:
-        newScore = uct(child)
-        if newScore > bestScore:
-            bestScore = newScore
-            bestChild = child
-    return bestChild
-
-
 def randomPlay(node):
     tempState = deepcopy(node.state)
     while not tempState.is_terminal():
         try:
             tempState = choice(tempState.all_states())
         except IndexError:
-            print("What?")
+            print("Really?")
             print(tempState)
     return tempState.get_score()
 
@@ -225,11 +213,11 @@ def expand(node):
 def descend(node):
     tempNode = node
     while len(tempNode.children) > 0:
-        tempNode = selection(tempNode)
+        tempNode = tempNode.children[np.argmax([uct(c) for c in tempNode.children])]
     return tempNode
 
 
-def MCTS(gamestate, limit=100000):
+def MCTS(gamestate, limit=2000):
     # Iteration limit of 10k
     node = MCTSNode(parent=None, state=gamestate)
     iteration_count = 0
@@ -242,20 +230,33 @@ def MCTS(gamestate, limit=100000):
             result = randomPlay(to_explore)
             backpropagate(to_explore, result)
         else:
-            continue
-            # backpropagate(node, node.state.get_score())
-    return selection(node)
+            backpropagate(node_to_expand, node_to_expand.state.get_score())
+
+    # noinspection PyTypeChecker
+    return node.children[np.argmax([c.visitCount for c in node.children])]
 
 
 def comp_vs_comp():
     state = NaughtsAndCrossesGame()
     while not state.is_terminal():
-        print(state)
         node = MCTS(gamestate=state)
         state = node.state
-    print(state)
-    return
+    return node
+
+def test(trials=1000):
+    xwincount, owincount, drawcount = 0, 0, 0
+    for i in range(trials):
+        print(i)
+        node = comp_vs_comp()
+        state = node.state
+        if state.get_score() == (0,0,1):
+            drawcount += 1
+        elif state.get_score() == (1,0,0):
+            xwincount += 1
+        else:
+            owincount += 1
+    print(f"xwincount = {xwincount}, owincount = {owincount}, drawcount = {drawcount} / {trials}")
 
 
 if __name__ == "__main__":
-    comp_vs_comp()
+    test(100)
