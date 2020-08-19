@@ -394,7 +394,7 @@ def test(trials=1000):
     """
     xwincount, owincount, drawcount = 0, 0, 0
     i = 0
-    while True:
+    while i < trials:
         node = comp_vs_comp()
         state = node.state
         if state.get_score() == 0:
@@ -411,4 +411,4 @@ def test(trials=1000):
 
 
 if __name__ == "__main__":
-    test(100)
+    test()
